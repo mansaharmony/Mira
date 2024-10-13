@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mira Lush - Fashion Lookbook</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;700&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.2.min.js" async></script>
+
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            margin: 0;
+            background-color: #E9D7F7; /* Light Lavender */
+            color: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: background-color 0.5s ease;
+            overflow-x: hidden; /* Prevent horizontal scrollbars */
+            min-height: 100vh; /* Ensure body takes full height */
+        }
+        header {
+            background-color: #00274D; /* Rich Navy Blue */
+            width: 100%;
+            padding: 20px;
+            position: sticky; /* Changed to sticky for better navigation */
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.7);
+            text-align: center;
+        }
+        header h1 {
+            color: #F6F6F6; /* Soft Ivory */
+            margin: 0;
+            font-size: 2.5rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .gallery {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            margin-top: 20px; /* Reduced margin to prevent excessive spacing */
+            padding: 20px;
+            flex-grow: 1; /* Allow gallery to expand and fill space */
+            overflow-y: auto; /* Allow scrolling in the gallery */
+        }
+        .gallery img {
+            width: 90%;
+            max-width: 500px;
+            margin: 20px 0;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: transform 0.3s, filter 0.3s;
+            filter: drop-shadow(0 4px 15px rgba(0, 0, 0, 0.5));
+            border: 3px solid #D6B525; /* Soft Gold Border */
+        }
+        .gallery img:hover {
+            transform: scale(1.05);
+            filter: brightness(1.1);
+        }
+        footer {
+            background-color: #00274D; /* Rich Navy Blue */
+            width: 100%;
+            padding: 10px;
+            text-align: center;
+            color: #F6F6F6; /* Soft Ivory */
+            z-index: 1000;
+            box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.7);
+        }
+        footer p {
+            margin: 5px 0;
+            font-size: 1.2rem;
+        }
+        #fullscreenModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        #fullscreenImage {
+            max-width: 90%;
+            max-height: 90%;
+            border: 5px solid #D6B525; /* Soft Gold */
+            border-radius: 15px;
+        }
+        .download-btn {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background: linear-gradient(45deg, #D6B525, #F2A1A1); /* Soft Gold to Peach */
+            color: #000000;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 1.2rem;
+            transition: background-color 0.3s;
+        }
+        .download-btn:hover {
+            background: linear-gradient(45deg, #F2A1A1, #D6B525); /* Inverted Gradient */
+        }
+        .loading {
+            color: #00274D; /* Rich Navy Blue */
+            font-size: 1.5rem;
+            margin-top: 20px;
+        }
+
+        /* Media Queries for Responsive Design */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2rem; /* Smaller header on mobile */
+            }
+            .gallery img {
+                width: 95%; /* Adjust image size on mobile */
+                margin: 10px 0; /* Less margin for smaller screens */
+            }
+            footer p {
+                font-size: 1rem; /* Smaller footer text */
+            }
+        }
+
+        @media (max-width: 480px) {
+            header h1 {
+                font-size: 1.5rem; /* Even smaller on very small screens */
+            }
+            .download-btn {
+                font-size: 1rem; /* Smaller button text */
+                padding: 8px 16px; /* Adjust button padding */
+            }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Mira Lush Fashion Lookbook</h1>
+</header>
+
+<div class="gallery" id="gallery">
+    <div class="loading">Exploring new looks...</div> <!-- Updated loading message -->
+</div>
+
+<footer>
+    <p>&copy; 2024 Mira Lush. All Rights Reserved.</p>
+    <p>Site by Mansa Harmony (GlobalLink)</p>
+</footer>
+
+<div id="fullscreenModal" onclick="closeFullscreen()">
+    <img id="fullscreenImage" src="" alt="Fullscreen Image" />
+    <a id="downloadLink" class="download-btn" href="#" download style="display: none;">Download Image</a>
+    <p id="imageDetails" style="color: #F6F6F6;"></p> <!-- Image details -->
+</div>
+
+<script>
+    const API_KEY = "YTCztYxFKoVrYvzLQlz5Xbj0JiwaabE5pk8ua0fhwe3lluuFt50QKt3Y"; // Your API Key from Pexels
+    let lastImageId = null; // Track last loaded image ID
+    let loading = false; // To prevent duplicate requests
+
+    function fetchImages() {
+        if (loading) return; // Prevent concurrent fetches
+        loading = true; // Set loading state
+
+        const keywords = 'adult sexy black women fashion'; // Updated query for adult content
+        fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(keywords)}&per_page=10&page=${Math.floor(Math.random() * 100) + 1}`, { // Random page for variation
+            method: 'GET',
+            headers: {
+                Accept: 'application/json',
+                Authorization: API_KEY,
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            const gallery = document.getElementById('gallery');
+            const loadingMessage = document.querySelector('.loading');
+
+            data.photos.forEach(photo => {
+                if (photo.id !== lastImageId && photo.width >= 1920 && photo.height >= 1080) { // Ensure HD quality
+                    const img = document.createElement('img');
+                    img.src = photo.src.medium;
+                    img.alt = photo.alt || "Fashion Photo";
+                    img.onclick = () => openFullscreen(photo.src.original, photo.alt, photo.photographer);
+                    gallery.appendChild(img);
+                    lastImageId = photo.id; // Update last loaded image ID
+                }
+            });
+            loading = false; // Reset loading state
+
+            if (data.photos.length === 0) {
+                loadingMessage.innerHTML = "No more images available.";
+            } else {
+                loadingMessage.innerHTML = ""; // Clear loading message
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching photos:', error);
+            loading = false; // Reset loading state on error
+            const loadingMessage = document.querySelector('.loading');
+            loadingMessage.innerHTML = "Error fetching images. Please try again.";
+        });
+    }
+
+    function openFullscreen(src, alt, photographer) {
+        const modal = document.getElementById('fullscreenModal');
+        const fullscreenImage = document.getElementById('fullscreenImage');
+        const downloadLink = document.getElementById('downloadLink');
+        const imageDetails = document.getElementById('imageDetails');
+
+        fullscreenImage.src = src;
+        downloadLink.href = src; // Set download link
+        downloadLink.style.display = 'block'; // Show download button
+        imageDetails.innerHTML = `Photo by <a href="https://www.pexels.com/@${photographer}" target="_blank" style="color: #D6B525;">${photographer}</a>`; // Photographer details
+
+        modal.style.display = 'flex'; // Show modal
+    }
+
+    function closeFullscreen() {
+        const modal = document.getElementById('fullscreenModal');
+        modal.style.display = 'none'; // Hide modal
+    }
+
+    // Load initial images on page load
+    window.onload = fetchImages;
+
+    // Fetch more images on page scroll
+    window.addEventListener('scroll', () => {
+        if (window.innerHeight + window.scrollY >= document.body.offsetHeight) {
+            fetchImages(); // Load more images when scrolled to bottom
+        }
+    });
+</script>
+
+</body>
+</html>
